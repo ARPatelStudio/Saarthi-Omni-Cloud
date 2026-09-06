@@ -1,5 +1,6 @@
 import logging
 from shared.schemas import BrainMessage
+from brains.cognition.agi_brain import agi_brain  # 🚀 Import the new Brain!
 
 # ⚡ AR PATEL STUDIO - MASTER UNDERSTANDING ROUTER
 logger = logging.getLogger("MasterRouter")
@@ -16,13 +17,32 @@ class MasterDispatcher:
 
         # Future Scope: Yahan if/else ya NLP intent classifier lagega jo alag-alag brains ko call karega
         
-        if message.event_type == "TEXT_COMMAND":
+        # 🚀 Route WhatsApp Messages directly to AGI Brain
+        if message.event_type == "WHATSAPP_MESSAGE":
+            return await agi_brain.process_whatsapp_message(message)
+            
+        # 🫀 Keeps the connection alive
+        elif message.event_type == "HEARTBEAT":
+            return {
+                "source": "MASTER_ROUTER",
+                "trace_id": message.trace_id,
+                "action": "ACK",
+                "response": "Heartbeat received. Engine Online."
+            }
+            
+        # 🛡️ PURANA CODE ZINDA HAI (Backward Compatibility ke liye)
+        elif message.event_type == "TEXT_COMMAND":
             return await self._route_to_agi_brain(message)
+            
         elif message.event_type == "VISION_FRAME":
             return await self._route_to_vision_brain(message)
+            
         else:
             return {"status": "error", "message": "Unknown event type."}
 
+    # ==========================================
+    # 🛡️ LEGACY/OLD BRAIN ROUTING (PRESERVED)
+    # ==========================================
     async def _route_to_agi_brain(self, message: BrainMessage) -> dict:
         # Phase 2 mein yahan Groq/LLM integration aayega
         logger.info("Forwarding to AGI Brain...")
