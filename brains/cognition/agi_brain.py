@@ -3,6 +3,7 @@ import re
 import logging
 from groq import Groq
 from shared.schemas import BrainMessage
+from brains.memory.memory_brain import memory_brain # 🚀 NAYA IMPORT (Memory Engine)
 
 logger = logging.getLogger("AGI_Brain")
 
@@ -21,23 +22,31 @@ class AGIBrain:
     async def process_whatsapp_message(self, message: BrainMessage) -> dict:
         sender_name = message.payload.get("sender", "Unknown")
         incoming_text = message.payload.get("text", "")
-        chat_history = message.payload.get("history", "Koi naya notification nahi hai.")
+        # Phone ki RAM wali temporary history (Short-term)
+        short_term_history = message.payload.get("history", "Koi naya notification nahi hai.")
 
         logger.info(f"AGI Processing WhatsApp message from: {sender_name}")
+
+        # 🚀 THE MAGIC: Fetching Long-Term Memory from Neon DB
+        long_term_history = await memory_brain.get_recent_context(sender=sender_name, limit=5)
 
         system_prompt = f"""
         Tum Jarvis ho, Amit Patel (AR PATEL STUDIO) ke advanced AI Assistant.
         Amit abhi busy hain.
         
-        -- CONVERSATION HISTORY --
-        {chat_history}
-        --------------------------
+        -- LONG-TERM MEMORY (Past Conversations from Database) --
+        {long_term_history}
+        --------------------------------------------------------
+        
+        -- SHORT-TERM CONTEXT (Recent Notifications from Phone) --
+        {short_term_history}
+        ----------------------------------------------------------
         
         Abhi Sender ({sender_name}) ne WhatsApp par naya message bheja hai: "{incoming_text}"
 
         Task: Ekdam natural, human-like, aur friendly Hinglish (Hindi+English) mein jawab do. Aisa lagna chahiye ki koi asli insaan baat kar raha hai.
         
-        Rule 1: Agar History mein tumne already bata diya hai ki Amit busy hain, toh US BAAT KO BILKUL MAT DOHRANA. Seedha sawal ka jawab do.
+        Rule 1: Agar History mein tumne already bata diya hai ki Amit busy hain, toh US BAAT KO BILKUL MAT DOHRANA. Seedha past conversation se link karke baat aage badhao.
         Rule 2: AI ya Robot jaisa sound mat karna. "Main AI assistant hoon" bolna band karo agar zaroori na ho.
         Rule 3: Sirf plain text do. Koi JSON, tags (<think>), ya quotes ka use mat karna.
         """
@@ -59,6 +68,14 @@ class AGIBrain:
             # 🔥 Clean <think> tags safely on Cloud
             reply_text = re.sub(r"<think>[\s\S]*?</think>", "", reply_text).strip()
             reply_text = reply_text.replace('"', '').strip()
+
+            # 🚀 SAVE TO NEON DATABASE (The AGI is learning!)
+            await memory_brain.save_interaction(
+                device_id=message.source_device, 
+                sender=sender_name, 
+                user_msg=incoming_text, 
+                ai_res=reply_text
+            )
 
             return {
                 "source": "AGI_BRAIN",
