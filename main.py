@@ -2,6 +2,7 @@ import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from api.gateway_wss import gateway_manager
+from brains.memory.memory_brain import memory_brain # 🚀 NAYA IMPORT
 
 # ⚡ AR PATEL STUDIO - LOGGING CONFIGURATION
 logging.basicConfig(
@@ -25,6 +26,8 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     logger.info("🚀 Jarvis Omni-Cloud Engine Started.")
+    # 🚀 CONNECT TO NEON POSTGRESQL ON BOOT
+    await memory_brain.connect_to_database()
 
 # 🟢 Render Health Check Endpoint (Render needs this to know the app is alive)
 @app.get("/")
