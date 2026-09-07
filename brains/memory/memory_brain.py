@@ -54,7 +54,7 @@ class MemoryBrain:
         Fetches the last few messages of a specific user to give AGI context.
         """
         if not self.pool:
-            return "No persistent memory available."
+            return "[No long-term memory connection available.]"
         
         try:
             async with self.pool.acquire() as conn:
@@ -63,8 +63,10 @@ class MemoryBrain:
                     sender, limit
                 )
                 
+                # 🔥 CRITICAL FIX: Removed the "Poison Pill" sentence. 
+                # Now it gracefully falls back to short-term memory if DB is empty.
                 if not rows:
-                    return "Yeh is user ka pehla message hai. Koi purani history nahi hai."
+                    return "[No past long-term memory found for this sender yet. Rely on short-term context.]"
                 
                 # Reverse to get chronological order (Oldest first, Newest last)
                 history = []
@@ -74,6 +76,6 @@ class MemoryBrain:
                 return "\n".join(history)
         except Exception as e:
             logger.error(f"Error fetching memory: {e}")
-            return "Error retrieving memory."
+            return "[Error retrieving long-term memory.]"
 
 memory_brain = MemoryBrain()
